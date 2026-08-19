@@ -2,6 +2,9 @@ use std::fmt::Debug;
 use cfg_if::cfg_if;
 use serde::{Deserialize, Serialize};
 
+/// Role required for human users to access openDuT.
+pub const ROLE_OPENDUT_USER: &str = "opendut-user";
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(untagged)]
 pub enum Audience {

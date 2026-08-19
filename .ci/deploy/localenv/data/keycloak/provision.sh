@@ -51,9 +51,11 @@ main() {
   # Create keycloak realm user roles
   create_realm_role testrole "$REALM_OPENDUT"
   create_realm_role managerrole "$REALM_OPENDUT"
+  create_realm_role "opendut-user" "$REALM_OPENDUT"
 
   # Create keycloak realm test users: username, password, group, role
   create_user opendut "$OPENDUT_USER_OPENDUT_PASSWORD" testgroup testrole "$REALM_OPENDUT"
+  kcadm add-roles -r "$REALM_OPENDUT" --uusername opendut --rolename opendut-user
 
   # Create keycloak client for opendut CLIs CLEO/EDGAR
   create_secret_client "opendut-cleo-client" "$OPENDUT_CLEO_NETWORK_OIDC_CLIENT_SECRET" "$REALM_OPENDUT"

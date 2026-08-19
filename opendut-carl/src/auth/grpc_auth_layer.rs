@@ -3,6 +3,7 @@ use crate::auth::json_web_key::JwkCacheValue;
 use crate::auth::validation::{authorize_user, Jwk, ValidationError};
 use crate::auth::CurrentUser;
 use crate::auth::in_memory_cache::CustomInMemoryCache;
+use opendut_auth::types::ROLE_OPENDUT_USER;
 use tonic::Status;
 use tracing::debug;
 use url::Url;
@@ -38,6 +39,13 @@ impl GrpcAuthenticationLayer {
 
                 match authorize_current_user(auth_header, issuer_url, issuer_remote_url, cache, reqwest_client).await {
                     Ok(user) => {
+                        // Service accounts (EDGAR/CLEO) are exempt from the role check.
+                        if !is_service_account(&user.name) && !user.claims.additional_claims().has_role(ROLE_OPENDUT_USER) {
+                            debug!("Blocking request from user '{}': missing required role '{}'", user.name, ROLE_OPENDUT_USER);
+                            return Err(Status::permission_denied(
+                                "CARL says, you do not have the required permissions to access openDuT! Please contact your administrator."
+                            ));
+                        }
                         request.extensions_mut().insert(user);
                         Ok(request)
                     }
@@ -58,4 +66,8 @@ async fn authorize_current_user(auth_token: &str, issuer_url: Url, issuer_remote
 
     let jwk_requester = Jwk(reqwest_client);
     authorize_user(issuer_url, issuer_remote_url, token_part, cache, jwk_requester, false).await
+}
+
+fn is_service_account(username: &str) -> bool {
+    username.starts_with("service-account-")
 }

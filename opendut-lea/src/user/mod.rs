@@ -62,6 +62,22 @@ impl UserAuthentication {
             }
         }
     }
+
+    pub fn has_role(&self, role: &str) -> Option<bool> {
+        match self {
+            UserAuthentication::Loading => { None }
+            UserAuthentication::Disabled => { Some(true) }
+            UserAuthentication::Unauthenticated => { Some(false) }
+            UserAuthentication::Authenticated(data) => {
+                match data.token.as_ref() {
+                    None => { Some(false) }
+                    Some(user) => {
+                        Some(user.claims.additional_claims.has_role(role))
+                    }
+                }
+            }
+        }
+    }
     
     pub fn is_authenticated(&self) -> Option<bool> {
         match self {
